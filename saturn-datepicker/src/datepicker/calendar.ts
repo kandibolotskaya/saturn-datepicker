@@ -29,7 +29,7 @@ import {Subject, Subscription} from 'rxjs';
 import {SatCalendarCellCssClasses} from './calendar-body';
 import {createMissingDateImplError} from './datepicker-errors';
 import {SatDatepickerIntl} from './datepicker-intl';
-import {SatMonthView} from './month-view';
+import {SatMonthView, DateEvent} from './month-view';
 import {
   getActiveOffset,
   isSameMultiYearView,
@@ -307,6 +307,8 @@ export class SatCalendar<D> implements AfterContentInit, AfterViewChecked, OnDes
 
   /** Order the views when clicking on period label button */
   @Input() orderPeriodLabel: 'multi-year' | 'month' = 'multi-year';
+
+  @Input() dateEvents: DateEvent[];
 
   /** Emits when the currently selected date changes. */
   @Output() readonly selectedChange: EventEmitter<D> = new EventEmitter<D>();

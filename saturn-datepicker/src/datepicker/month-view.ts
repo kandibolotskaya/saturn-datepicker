@@ -30,16 +30,27 @@ import {
   Output,
   ViewEncapsulation,
   ViewChild,
+  Injector,
 } from '@angular/core';
 import {DateAdapter} from '../datetime/date-adapter';
 import {MAT_DATE_FORMATS, MatDateFormats} from '../datetime/date-formats';
 import {Directionality} from '@angular/cdk/bidi';
 import {SatCalendarBody, SatCalendarCell, SatCalendarCellCssClasses} from './calendar-body';
 import {createMissingDateImplError} from './datepicker-errors';
+import { ComponentPortal, PortalInjector, ComponentType } from '@angular/cdk/portal';
+import { eventToken } from '../constants';
 
 
 const DAYS_PER_WEEK = 7;
 
+export class DateEvent {
+  constructor(
+    public dateValue: number,
+    public monthValue: number,
+    public component: ComponentType<any>,
+    public data: any
+  ) { }
+}
 
 /**
  * An internal component used to display a single month in the datepicker.
@@ -138,6 +149,8 @@ export class SatMonthView<D> implements AfterContentInit {
   /** Function used to filter which dates are selectable. */
   @Input() dateFilter: (date: D) => boolean;
 
+  @Input() dateEvents: DateEvent[];
+
   /** Function that can be used to add custom CSS classes to dates. */
   @Input() dateClass: (date: D) => SatCalendarCellCssClasses;
 
@@ -174,7 +187,8 @@ export class SatMonthView<D> implements AfterContentInit {
   /** The names of the weekdays. */
   _weekdays: {long: string, narrow: string}[];
 
-  constructor(private _changeDetectorRef: ChangeDetectorRef,
+  constructor(private injector: Injector,
+              private _changeDetectorRef: ChangeDetectorRef,
               @Optional() @Inject(MAT_DATE_FORMATS) private _dateFormats: MatDateFormats,
               @Optional() public _dateAdapter: DateAdapter<D>,
               @Optional() private _dir?: Directionality) {
@@ -347,9 +361,30 @@ export class SatMonthView<D> implements AfterContentInit {
       const ariaLabel = this._dateAdapter.format(date, this._dateFormats.display.dateA11yLabel);
       const cellClasses = this.dateClass ? this.dateClass(date) : undefined;
 
-      this._weeks[this._weeks.length - 1]
+      if (this.dateEvents) {
+        const event = this.dateEvents.find(
+          (dateEvent) => dateEvent.dateValue === (i + 1) && dateEvent.monthValue === this._dateAdapter.getMonth(this.activeDate)
+        );
+
+        if (!event) {
+          this._weeks[this._weeks.length - 1]
           .push(new SatCalendarCell(i + 1, dateNames[i], ariaLabel, enabled, cellClasses));
+        } else {
+          const eventComponent = new ComponentPortal(event.component, null, this.createInjector(event.data))
+          this._weeks[this._weeks.length - 1]
+          .push(new SatCalendarCell(i + 1, dateNames[i], ariaLabel, enabled, cellClasses, eventComponent));
+        }
+      } else {
+        this._weeks[this._weeks.length - 1]
+        .push(new SatCalendarCell(i + 1, dateNames[i], ariaLabel, enabled, cellClasses));
+      }
     }
+  }
+
+  private createInjector(dataToPass): PortalInjector {
+    const injectorTokens = new WeakMap();
+    injectorTokens.set(eventToken, dataToPass);
+    return new PortalInjector(this.injector, injectorTokens);
   }
 
   /** Date filter for the month */

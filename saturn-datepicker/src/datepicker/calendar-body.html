@@ -52,5 +52,6 @@
          [class.mat-calendar-body-today]="todayValue === item.value">
       {{item.displayValue}}
     </div>
+    <ng-template [cdkPortalOutlet]="item.eventComponent"></ng-template>
   </td>
 </tr>

@@ -19,6 +19,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import {take} from 'rxjs/operators';
+import { ComponentPortal } from '@angular/cdk/portal';
 
 /**
  * Extra CSS classes that can be associated with a calendar cell.
@@ -34,7 +35,8 @@ export class SatCalendarCell {
               public displayValue: string,
               public ariaLabel: string,
               public enabled: boolean,
-              public cssClasses?: SatCalendarCellCssClasses) {}
+              public cssClasses?: SatCalendarCellCssClasses,
+              public eventComponent?: ComponentPortal<any>) {}
 }
 
 
